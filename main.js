@@ -6,7 +6,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x101010);
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); // field of view, aspect ratio, near clipping plane, far clipping plane
-camera.position.set(0, 8, 15);
+camera.position.set(0, 8, 14);
 
 window.addEventListener( 'resize', onWindowResize );
 
@@ -85,31 +85,13 @@ lights.forEach(({ color, position }) => {
 
     scene.add(spotlight);
 
+    // Create a light model and light cone for each spotlight
     createLightModel(color, position);
+    createLightCone(spotlight, position);
 
     // SpotlightHelper
     // const spotlightHelper = new THREE.SpotLightHelper( spotlight );
     // scene.add( spotlightHelper );
-
-    // Light Cone
-    const coneHeight = spotlight.distance - 5; // Use spotlight's distance for cone height
-    const coneRadius = coneHeight * Math.tan(spotlight.angle); // Calculate radius using angle
-    const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32);
-    const coneMaterial = new THREE.MeshStandardMaterial({
-        color: color,
-        emissive: color,
-        emissiveIntensity: 1.5,
-        transparent: true,
-        opacity: 0.05, // Adjust opacity for light effect
-        depthWrite: false, // Prevent writing to the depth buffer for better blending
-    });
-
-    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
-    cone.position.set(...position);
-    cone.position.z = position[2] - coneHeight / 2; // Move the cone to the end of the spotlight
-    cone.rotation.x = -Math.PI / 2; // Rotate the cone to face sideways
-    cone.rotation.z = Math.PI; // Rotate the cone to face the wall
-    scene.add(cone);
 });
 
 // AmbientLight
@@ -168,4 +150,25 @@ function createLightModel(color, position) {
     cylinder.position.set(...position);
     cylinder.position.y = (position[1] - 1) / 2;
     scene.add(cylinder);
+}
+
+// Helper function to create the light cone
+function createLightCone (spotlight, position) {
+    const coneHeight = spotlight.distance - 5; // Use spotlight's distance for cone height
+    const coneRadius = coneHeight * Math.tan(spotlight.angle); // Calculate radius using angle
+    const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32);
+    const coneMaterial = new THREE.MeshStandardMaterial({
+        color: spotlight.color,
+        emissive: spotlight.color,
+        emissiveIntensity: 1.5,
+        transparent: true,
+        opacity: 0.05,
+        depthWrite: false, // Prevent writing to the depth buffer for better blending
+    });
+
+    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+    cone.position.set(position[0], position[1], position[2] - coneHeight / 2); // Move the cone to be at the end of the spotlight
+    cone.rotation.x = -Math.PI / 2; // Rotate the cone to face sideways
+    cone.rotation.z = Math.PI; // Rotate the cone to face the wall
+    scene.add(cone);
 }
