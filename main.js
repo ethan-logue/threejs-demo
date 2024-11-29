@@ -15,35 +15,35 @@ window.addEventListener( 'resize', onWindowResize );
 // scene.add( axesHelper );
 
 // Renderer
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true }); // Enable antialiasing
 renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = true; // Enable shadows
 document.body.appendChild( renderer.domElement );
 
 // OrbitControls
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.minDistance = 2;
 controls.maxDistance = 20;
-controls.maxPolarAngle = Math.PI / 2;
-controls.target.set( 0, 1, 0 );
-controls.update();
+controls.maxPolarAngle = Math.PI / 2; // Prevent camera from going below the ground
+controls.target.set( 0, 3, 0 ); // Orbit around the knot
+controls.update(); // Must be called after any manual changes to the camera's transform
 
-// MeshKnot
+// Knot
 const geoKnot = new THREE.TorusKnotGeometry( 1.5, 0.5, 200, 16 );
 const matKnot = new THREE.MeshStandardMaterial( { color: 0xffffff } );
-const meshKnot = new THREE.Mesh( geoKnot, matKnot );
-meshKnot.position.set( 0, 5, 0 );
-meshKnot.castShadow = true;
-scene.add( meshKnot );
+const knot = new THREE.Mesh( geoKnot, matKnot );
+knot.position.set( 0, 5, 0 );
+knot.castShadow = true;
+scene.add( knot );
 
 // Stage
 const stageGeometry = new THREE.PlaneGeometry(22, 15);
 
 // Texture for the stage
 const texture = new THREE.TextureLoader().load('./textures/wood.png');
-texture.wrapS = THREE.RepeatWrapping;
-texture.wrapT = THREE.RepeatWrapping;
-texture.repeat.set(4, 4);
+texture.wrapS = THREE.RepeatWrapping; // Repeat the texture in the S direction (x)
+texture.wrapT = THREE.RepeatWrapping; // Repeat the texture in the T direction (y)
+texture.repeat.set(4, 4); // Repeat the texture 4 times in each direction
 const stageMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
 const stage = new THREE.Mesh(stageGeometry, stageMaterial);
@@ -53,7 +53,7 @@ stage.receiveShadow = true;
 scene.add(stage);
 
 // Wall
-const wallGeometry = new THREE.BoxGeometry(22, 14, 2);
+const wallGeometry = new THREE.BoxGeometry(22, 14, 2); // Width, height, depth (thickness)
 const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 wall.position.set(0, 7, -5);
@@ -75,11 +75,11 @@ lights.forEach(({ color, position }) => {
     spotlight.penumbra = 0.05; // Softness of the spotlight edge
     spotlight.decay = 1; // Intensity decay over distance
     spotlight.castShadow = true; // Enable shadow casting
-    // spotlight.target = meshKnot; // Point the light at the knot
+    // spotlight.target = knot; // Point the light at the knot
 
     // Set spotlight's target to a point directly in front of it
     const spotlightTarget = new THREE.Object3D();
-    spotlightTarget.position.set(position[0], position[1], position[2] - 1); // Forward along -Z
+    spotlightTarget.position.set(position[0], position[1], position[2] - 1); // Points the light directly in front of it
     scene.add(spotlightTarget);
     spotlight.target = spotlightTarget;
 
@@ -94,14 +94,14 @@ lights.forEach(({ color, position }) => {
     // scene.add( spotlightHelper );
 });
 
-// AmbientLight
-const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+// Ambient lighting
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
 
-// Animation
+// Animation loop
 function animate() {
-    meshKnot.rotation.x += 0.01;
-    meshKnot.rotation.y += 0.01;
+    knot.rotation.x += 0.01;
+    knot.rotation.y += 0.01;
 	renderer.render( scene, camera );
 }
 renderer.setAnimationLoop( animate );
@@ -118,11 +118,11 @@ function createLightModel(color, position) {
     const loader = new GLTFLoader();
 
     loader.load('./models/spotlight.glb', function (gltf) {
-        const lightModel = gltf.scene;
+        const lightModel = gltf.scene; // Get the model from the glTF file
         lightModel.position.set(...position);
         lightModel.scale.set(2, 2, 2);
-        lightModel.rotation.y = Math.PI;
-        lightModel.position.y = position[1] - 1;
+        lightModel.rotation.y = Math.PI; // Rotate the model to face the wall
+        lightModel.position.y = position[1] - 1; // Move the model to match the light's position
 
         // Traverse the model to find the correct mesh and change its color
         lightModel.traverse((child) => {
@@ -140,7 +140,7 @@ function createLightModel(color, position) {
     const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x404040 });
     const box = new THREE.Mesh(boxGeometry, boxMaterial);
     box.position.set(...position);
-    box.position.y = position[1] - 1;
+    box.position.y = position[1] - 1; // Move the box to be at the bottom of the light model
     scene.add(box);
 
     // Pole
@@ -148,7 +148,7 @@ function createLightModel(color, position) {
     const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x404040 });
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
     cylinder.position.set(...position);
-    cylinder.position.y = (position[1] - 1) / 2;
+    cylinder.position.y = (position[1] - 3); // Move the cylinder to be at the bottom of the platform
     scene.add(cylinder);
 }
 
